@@ -1,0 +1,41 @@
+version: v1
+common:
+  os: centos6
+  tools:
+    oracle-jdk: 8
+build:
+  tools:
+    maven: 3.3.3
+    node: 4.4.0
+    git:
+    make:
+  libs:
+  env:
+    module: phx-distributed-lock-app
+    output_doc: true
+  run:
+    workDir:
+    cmd:
+      - sh deploy/pre_deploy.sh
+  target:
+    distDir: dist
+    files:
+      - ./*.sh
+      - ./*.ini
+      - ./*.jar
+autodeploy:
+  env:
+    java_home: /usr/local/java8
+  targetDir: /opt/meituan/phx-distributed-lock-app
+  run: sh post_deploy.sh
+deploy:
+  tools:
+  libs:
+  env:
+    java_home: /usr/local/java8
+  targetDir: /opt/meituan/phx-distributed-lock-app
+  run:
+    workDir: /opt/meituan/phx-distributed-lock-app
+    cmd:
+      - sh post_deploy.sh
+  checkCmd:

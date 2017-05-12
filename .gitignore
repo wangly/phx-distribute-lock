@@ -1,0 +1,14 @@
+target/
+.idea/
+*.DS_Store
+*.un~
+*.class
+*.jar
+*.war
+*.iml
+out/
+gen/
+/logs
+/node_modules
+*/resources/doc/*
+*/src/main/asciidoc/*

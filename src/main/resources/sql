@@ -1,0 +1,5 @@
+alter table phx_order_base rename phx_order_base1;
+alter table phx_order_apt rename phx_order_apt1
+alter table phx_order_apt_log rename phx_order_apt_log1
+alter table phx_order_cancel rename phx_order_cancel1
+alter table phx_order_cancel rename phx_order_cancel1
