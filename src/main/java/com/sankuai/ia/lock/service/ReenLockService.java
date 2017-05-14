@@ -4,8 +4,10 @@ package com.sankuai.ia.lock.service;
 
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
-import com.sankuai.ia.lock.squirrel.SquirrelLock;
+import com.sankuai.ia.phx.aop.annonation.ValidationBody;
 import com.sankuai.ia.phx.utils.AssemblerUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,10 +17,14 @@ import java.util.function.Function;
  * @version 1.0
  * @created 17/5/2 下午6:36
  **/
-public class SquirrelService {
+@Service
+public class ReenLockService {
 
-    public static <T,R> R processWithReenLock(ReentrantLockParam lockParam, T args, Function<T,R> lockFunc) {
-        SquirrelLock squirrelLock = SquirrelLock.getInstance();
+    @Autowired
+    private SquirrelLock squirrelLock;
+
+    @ValidationBody
+    public <T,R> R processWithReenLock(ReentrantLockParam lockParam, T args, Function<T,R> lockFunc) {
         //加锁
         int value = squirrelLock.reentrantLock(lockParam);
 
@@ -33,8 +39,8 @@ public class SquirrelService {
 
     }
 
-    public static <T> void processWithReenLock(ReentrantLockParam lockParam, T args, Consumer<T> lockFunc) {
-        SquirrelLock squirrelLock = SquirrelLock.getInstance();
+    @ValidationBody
+    public <T> void processWithReenLock(ReentrantLockParam lockParam, T args, Consumer<T> lockFunc) {
         //加锁
         int value = squirrelLock.reentrantLock(lockParam);
 

@@ -7,7 +7,7 @@ package com.sankuai.ia.lock.consts;
  * @version 1.0
  * @created 17/4/12 下午3:39
  **/
-public class SquirrelConsts {
+public class ReenLockConsts {
 
     //默认的category
     public static final String DEFAULT_CATEGORY = "phx-default-lock";

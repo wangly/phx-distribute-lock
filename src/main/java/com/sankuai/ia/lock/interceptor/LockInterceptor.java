@@ -2,12 +2,11 @@
 // All rights reserved
 package com.sankuai.ia.lock.interceptor;
 
-import com.meituan.mtrace.Tracer;
 import com.sankuai.ia.lock.annotation.BatchReenLock;
 import com.sankuai.ia.lock.annotation.ReenLock;
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
-import com.sankuai.ia.lock.squirrel.SquirrelLock;
+import com.sankuai.ia.lock.service.SquirrelLock;
 import com.sankuai.ia.lock.utils.TraceUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -16,6 +15,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -36,6 +36,9 @@ import java.util.Map;
 @Aspect
 @Component
 public class LockInterceptor {
+
+    @Autowired
+    private SquirrelLock squirrelLock;
 
     @Pointcut("@annotation(com.sankuai.ia.lock.annotation.ReenLock)")
     public void methodAnnotatedReenLock() {
@@ -58,13 +61,15 @@ public class LockInterceptor {
         ReenLock reenLockAnnotaion = method.getAnnotation(ReenLock.class);
         //解析获取key
         String key = parseKey(reenLockAnnotaion.fieldKey(), method, jp.getArgs());
-        String traceId = Tracer.id() == null ? "mt-" + (int) (Math.random() * Math.pow(10, 6)) + System.currentTimeMillis() : Tracer.id();
+        if (StringUtils.isBlank(key)) {//key不存在,则无需加锁
+            return jp.proceed(jp.getArgs());
+        }
+        String traceId = TraceUtils.id();
         ReentrantLockParam lockParam = new ReentrantLockParam();
         lockParam.setCategory(reenLockAnnotaion.category());
         lockParam.setKey(key);
         lockParam.setExpireTime(reenLockAnnotaion.expireTime());
         lockParam.setTraceId(traceId);
-        SquirrelLock squirrelLock = SquirrelLock.getInstance();
         int value = squirrelLock.reentrantLock(lockParam);
 
         try {
@@ -83,7 +88,6 @@ public class LockInterceptor {
 
     @Around("methodAnnotatedBatchReenLock() && publicMethod()")
     public Object batchLock(ProceedingJoinPoint jp) throws Throwable {
-        SquirrelLock squirrelLock = SquirrelLock.getInstance();
         //before 加锁
         Method method = ((MethodSignature) jp.getSignature()).getMethod();
         BatchReenLock reenLockAnnotaion = method.getAnnotation(BatchReenLock.class);
@@ -135,7 +139,6 @@ public class LockInterceptor {
      * @return
      */
     private String parseKey(String key, Method method, Object[] args) {
-
         //获取被拦截方法参数名列表(使用Spring支持类库)
         LocalVariableTableParameterNameDiscoverer u = new LocalVariableTableParameterNameDiscoverer();
         String[] paraNameArr = u.getParameterNames(method);

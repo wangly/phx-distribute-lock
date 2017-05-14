@@ -2,7 +2,7 @@
 // All rights reserved
 package com.sankuai.ia.lock.annotation;
 
-import com.sankuai.ia.lock.consts.SquirrelConsts;
+import com.sankuai.ia.lock.consts.ReenLockConsts;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -20,9 +20,9 @@ import java.lang.annotation.Target;
 @Documented
 public @interface ReenLock {
     //lock的category
-    String category() default SquirrelConsts.DEFAULT_CATEGORY;
+    String category();
     //加锁的唯一标识字段名称
-    String fieldKey();
+    String fieldKey() default "";
     //有效时间
-    int expireTime() default SquirrelConsts.DEFAULT_EXPIRE_TIME;
+    int expireTime() default ReenLockConsts.DEFAULT_EXPIRE_TIME;
 }

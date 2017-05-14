@@ -2,7 +2,7 @@
 // All rights reserved
 package com.sankuai.ia.lock;
 
-import com.sankuai.ia.lock.consts.SquirrelConsts;
+import com.sankuai.ia.lock.consts.ReenLockConsts;
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
 
@@ -15,17 +15,17 @@ public class MockData {
 
     public static ReentrantLockParam buildLockParam() {
         ReentrantLockParam lockParam = new ReentrantLockParam();
-        lockParam.setCategory(SquirrelConsts.DEFAULT_CATEGORY);
+        lockParam.setCategory(ReenLockConsts.DEFAULT_CATEGORY);
         lockParam.setKey("test");
-        lockParam.setExpireTime(SquirrelConsts.DEFAULT_EXPIRE_TIME);
+        lockParam.setExpireTime(ReenLockConsts.DEFAULT_EXPIRE_TIME);
         return lockParam;
     }
 
     public static ReentrantUnlockParam buildUnlockParam() {
         ReentrantUnlockParam unlockParam = new ReentrantUnlockParam();
-        unlockParam.setCategory(SquirrelConsts.DEFAULT_CATEGORY);
+        unlockParam.setCategory(ReenLockConsts.DEFAULT_CATEGORY);
         unlockParam.setKey("test");
-        unlockParam.setExpireTime(SquirrelConsts.DEFAULT_EXPIRE_TIME);
+        unlockParam.setExpireTime(ReenLockConsts.DEFAULT_EXPIRE_TIME);
         return unlockParam;
     }
 }

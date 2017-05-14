@@ -1,22 +1,21 @@
 // Copyright (C) 2017 Meituan
 // All rights reserved
-package com.sankuai.ia.lock.squirrel;
+package com.sankuai.ia.lock.service;
 
 import com.dianping.squirrel.client.StoreKey;
 import com.dianping.squirrel.client.impl.redis.RedisStoreClient;
 import com.dianping.squirrel.client.impl.redis.spring.RedisClientBeanFactory;
-import com.sankuai.ia.lock.consts.SquirrelConsts;
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
 import com.sankuai.ia.phx.aop.annonation.ValidationBody;
-import com.sankuai.ia.phx.utils.AssertUtils;
 import com.sankuai.ia.phx.utils.CompareUtils;
 import com.sankuai.ia.phx.utils.exception.APIRuntimeException;
-import com.sankuai.ia.phx.utils.paramvalid.IgnoreValidate;
 import com.sankuai.ia.phx.utils.resp.IResponseStatusMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,20 +25,17 @@ import java.util.Map;
  * @version 1.0
  * @created 17/4/12 上午10:33
  **/
+@Service
 public class SquirrelLock {
 
     private static final Logger logger = LoggerFactory.getLogger(SquirrelLock.class);
 
     private RedisStoreClient storeClient;
-    private static final SquirrelLock instance = new SquirrelLock();//初始时创建,避免影响加锁性能
     private static final String ROUTER_TYPE = "master-only";
     private static final String CLUSTER_NAME_PROPERTY = "phx.lock.cache.cluster.name";
 
-    public static SquirrelLock getInstance() {
-        return instance;
-    }
-
-    private SquirrelLock() {
+    @PostConstruct
+    public void init() {
         RedisClientBeanFactory factory = new RedisClientBeanFactory();
         factory.setClusterName(System.getProperty(CLUSTER_NAME_PROPERTY));
         factory.setReadTimeout(100);
@@ -51,7 +47,6 @@ public class SquirrelLock {
         try {
             storeClient = factory.getObject();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new APIRuntimeException(e);
         }
     }
@@ -64,11 +59,8 @@ public class SquirrelLock {
      */
     @ValidationBody
     public Integer reentrantLock(ReentrantLockParam param) {
-        checkParam(param);
-
         if (logger.isDebugEnabled()) {
-            logger.info("***thread name:{}, reentrantLock begin currentTime:{}", Thread.currentThread().getName(),
-                    new Date(System.currentTimeMillis()));
+            logger.info("reentrantLock begin param:{}, currentTime:{}", param, new Date(System.currentTimeMillis()));
         }
         StoreKey storeKey = new StoreKey(param.getCategory(), param.getKey());
         String traceId = param.getTraceId();
@@ -93,21 +85,10 @@ public class SquirrelLock {
             logger.info("lock storeKey:{}, traceId:{}, value:{} success!", storeKey, traceId, value);
         }
         if (logger.isDebugEnabled()) {
-            logger.info("***thread name:{}, reentrantLock end currentTime:{}",Thread.currentThread().getName(),  new Date(System.currentTimeMillis()));
+            logger.info("reentrantLock end, thread name:{}, currentTime:{}", Thread.currentThread().getName(),
+                    new Date(System.currentTimeMillis()));
         }
         return value;
-    }
-
-    private void checkParam(ReentrantLockParam param) {
-        AssertUtils.notNull(param.getKey(), "Key不能为空");
-        AssertUtils.notNull(param.getTraceId(), "TraceId不能为空");
-
-        if (param.getCategory() == null) {
-            param.setCategory(SquirrelConsts.DEFAULT_CATEGORY);
-        }
-        if (CompareUtils.lessEquals(param.getExpireTime(), 0)) {
-            param.setExpireTime(SquirrelConsts.DEFAULT_EXPIRE_TIME);
-        }
     }
 
     /**
@@ -117,10 +98,8 @@ public class SquirrelLock {
      */
     @ValidationBody
     public boolean reentrantUnlock(ReentrantUnlockParam param) {
-        checkParam(param);
         if (logger.isDebugEnabled()) {
-            logger.info("***thread name:{}, reentrantUnlock begin param:{}, currentTime:{}",
-                    Thread.currentThread().getName(), param, new Date(System.currentTimeMillis()));
+            logger.info("reentrantUnlock begin param:{}, currentTime:{}", param, new Date(System.currentTimeMillis()));
         }
         boolean result = true;
         StoreKey storeKey = new StoreKey(param.getCategory(), param.getKey());
@@ -146,25 +125,14 @@ public class SquirrelLock {
         }
         if (!result) {
             logger.warn("reentrantUnlock param:{}, fail!", param);
+        } else {
+            logger.info("unlock storeKey:{}, traceId:{}, value:{}", storeKey, traceId, value);
         }
-        logger.info("unlock storeKey:{}, traceId:{}, value:{}", storeKey, traceId, value);
         if (logger.isDebugEnabled()) {
-            logger.info("***thread name:{}, reentrantUnlock end currentTime:{}", Thread.currentThread().getName(),
+            logger.info("reentrantUnlock end, thread name:{}, currentTime:{}", Thread.currentThread().getName(),
                     new Date(System.currentTimeMillis()));
         }
         return result;
-    }
-
-    private void checkParam(ReentrantUnlockParam param) {
-        AssertUtils.notNull(param.getKey(), "Key不能为空");
-        AssertUtils.notNull(param.getTraceId(), "TraceId不能为空");
-        AssertUtils.notNull(param.getOldValue(), "OldValue不能为空");
-        if (param.getCategory() == null) {
-            param.setCategory(SquirrelConsts.DEFAULT_CATEGORY);
-        }
-        if (CompareUtils.lessEquals(param.getExpireTime(), 0)) {
-            param.setExpireTime(SquirrelConsts.DEFAULT_EXPIRE_TIME);
-        }
     }
 
 }

@@ -2,6 +2,7 @@
 // All rights reserved
 package com.sankuai.ia.lock.param;
 
+import com.sankuai.ia.lock.consts.ReenLockConsts;
 import com.sankuai.ia.phx.utils.paramvalid.NotNull;
 
 /**
@@ -16,7 +17,7 @@ public class ReentrantLockParam {
     private String key;
     @NotNull
     private String traceId;
-    private int expireTime;
+    private int expireTime = ReenLockConsts.DEFAULT_EXPIRE_TIME;
 
     public String getCategory() {
         return category;

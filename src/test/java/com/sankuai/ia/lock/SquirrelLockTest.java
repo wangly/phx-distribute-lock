@@ -2,12 +2,14 @@
 // All rights reserved
 package com.sankuai.ia.lock;
 
+import com.sankuai.ia.lock.consts.ReenLockConsts;
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
-import com.sankuai.ia.lock.squirrel.SquirrelLock;
+import com.sankuai.ia.lock.service.SquirrelLock;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +33,12 @@ public class SquirrelLockTest extends BaseTest {
     private static AtomicInteger lockSleepTime = new AtomicInteger(0);
     private static AtomicInteger unlockSleepTime = new AtomicInteger(1);
 
+    @Autowired
+    private SquirrelLock squirrelLock;
+
     @Test
     public void testReenLock() {
         try {
-            SquirrelLock lock = SquirrelLock.getInstance();
             ExecutorService exec = Executors.newFixedThreadPool(2);
 
             //case1:嵌套加锁
@@ -44,13 +48,14 @@ public class SquirrelLockTest extends BaseTest {
                 String traceId = String.valueOf(traceNum);
                 lockParam.setTraceId(traceId);
                 lockParam.setKey("test");
+                lockParam.setCategory(ReenLockConsts.DEFAULT_CATEGORY);
                 //加锁
                 try {
                     Thread.sleep((lockSleepTime.getAndIncrement()) * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                int value = lock.reentrantLock(lockParam);
+                int value = squirrelLock.reentrantLock(lockParam);
 
                 logger.info("reentrantLock value:{}", value);
 
@@ -62,8 +67,9 @@ public class SquirrelLockTest extends BaseTest {
                 ReentrantUnlockParam unlockParam = new ReentrantUnlockParam();
                 unlockParam.setKey("test");
                 unlockParam.setTraceId(traceId);
+                unlockParam.setCategory(ReenLockConsts.DEFAULT_CATEGORY);
                 unlockParam.setOldValue(value);
-                lock.reentrantUnlock(unlockParam);
+                squirrelLock.reentrantUnlock(unlockParam);
                 return traceId;
             };
 
@@ -94,15 +100,15 @@ public class SquirrelLockTest extends BaseTest {
     @Test
     public void testMultiLock() {
         try {
-            SquirrelLock lock = SquirrelLock.getInstance();
-            ExecutorService exec = Executors.newFixedThreadPool(5);
+            ExecutorService exec = Executors.newFixedThreadPool(2);
 
             //case1:串讲加锁
             Callable<String> reenLockThread = () -> {
                 ReentrantLockParam lockParam = new ReentrantLockParam();
-                Integer traceNum = (int) (Math.floor((Math.random() * 5) + 1));
+                Integer traceNum = (int) (Math.floor((Math.random() * 2) + 1));
                 String traceId = String.valueOf(traceNum);
                 lockParam.setTraceId(traceId);
+                lockParam.setCategory(ReenLockConsts.DEFAULT_CATEGORY);
                 lockParam.setKey("test");
                 //加锁
                 try {
@@ -110,7 +116,7 @@ public class SquirrelLockTest extends BaseTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                int value = lock.reentrantLock(lockParam);
+                int value = squirrelLock.reentrantLock(lockParam);
 
                 logger.info("reentrantLock value:{}", value);
 
@@ -123,12 +129,13 @@ public class SquirrelLockTest extends BaseTest {
                 unlockParam.setKey("test");
                 unlockParam.setTraceId(traceId);
                 unlockParam.setOldValue(value);
-                lock.reentrantUnlock(unlockParam);
+                unlockParam.setCategory(ReenLockConsts.DEFAULT_CATEGORY);
+                squirrelLock.reentrantUnlock(unlockParam);
                 return traceId;
             };
 
             List<Callable<String>> callableList = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 2; i++) {
                 callableList.add(reenLockThread);
             }
             List<Future<String>> futures = exec.invokeAll(callableList);

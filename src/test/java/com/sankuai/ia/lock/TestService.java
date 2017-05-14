@@ -3,6 +3,8 @@
 package com.sankuai.ia.lock;
 
 import com.sankuai.ia.lock.annotation.BatchReenLock;
+import com.sankuai.ia.lock.annotation.ReenLock;
+import com.sankuai.ia.lock.consts.ReenLockConsts;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,8 +17,13 @@ import java.util.List;
 @Service
 public class TestService {
 
-    @BatchReenLock(fieldKey = "orderIds")
+    @BatchReenLock(fieldKey = "orderIds", category = ReenLockConsts.DEFAULT_CATEGORY)
     public void batchDelete(List<Long> orderIds, Long userId) {
         System.out.println("batchDelete");
+    }
+
+    @ReenLock(fieldKey = "orderId", category = ReenLockConsts.DEFAULT_CATEGORY)
+    public void delete(Long orderId) {
+        System.out.println("delete");
     }
 }
