@@ -7,7 +7,7 @@ import com.sankuai.ia.lock.annotation.ReenLock;
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
 import com.sankuai.ia.lock.service.SquirrelLock;
-import com.sankuai.ia.lock.utils.TraceUtils;
+import com.sankuai.ia.lock.utils.TraceIdUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -60,11 +60,12 @@ public class LockInterceptor {
         Method method = ((MethodSignature) jp.getSignature()).getMethod();
         ReenLock reenLockAnnotaion = method.getAnnotation(ReenLock.class);
         //解析获取key
-        String key = parseKey(reenLockAnnotaion.fieldKey(), method, jp.getArgs());
+        String fieldKey = reenLockAnnotaion.fieldKey();
+        String key = StringUtils.isBlank(fieldKey) ? null : parseKey(fieldKey, method, jp.getArgs());
         if (StringUtils.isBlank(key)) {//key不存在,则无需加锁
             return jp.proceed(jp.getArgs());
         }
-        String traceId = TraceUtils.id();
+        String traceId = TraceIdUtils.id();
         ReentrantLockParam lockParam = new ReentrantLockParam();
         lockParam.setCategory(reenLockAnnotaion.category());
         lockParam.setKey(key);
@@ -92,9 +93,13 @@ public class LockInterceptor {
         Method method = ((MethodSignature) jp.getSignature()).getMethod();
         BatchReenLock reenLockAnnotaion = method.getAnnotation(BatchReenLock.class);
         //解析获取key
-        String keyListStr = parseKey(reenLockAnnotaion.fieldKey(), method, jp.getArgs());
+        String fieldKey = reenLockAnnotaion.fieldKey();
+        String keyListStr = StringUtils.isBlank(fieldKey) ? null : parseKey(fieldKey, method, jp.getArgs());
+        if (StringUtils.isBlank(keyListStr)) {//key不存在,则无需加锁
+            return jp.proceed(jp.getArgs());
+        }
         List<String> keys = Arrays.asList(StringUtils.split(keyListStr, ","));
-        String traceId = TraceUtils.id();
+        String traceId = TraceIdUtils.id();
         boolean isEmptyKeys = CollectionUtils.isEmpty(keys);
         Map<String, Integer> valueMap = new HashMap<>(keys.size());
         if (!isEmptyKeys) {
@@ -151,7 +156,13 @@ public class LockInterceptor {
         for (int i = 0; i < paraNameArr.length; i++) {
             context.setVariable(paraNameArr[i], args[i]);
         }
-        return parser.parseExpression(key).getValue(context, String.class);
+        try {
+            return parser.parseExpression(key).getValue(context, String.class);
+        } catch (Exception e) {
+            //解析错误,即需要加锁字段可能不存在,则不处理
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }

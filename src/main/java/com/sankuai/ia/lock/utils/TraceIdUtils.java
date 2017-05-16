@@ -2,7 +2,7 @@
 // All rights reserved
 package com.sankuai.ia.lock.utils;
 
-import com.meituan.mtrace.IdGen;
+import com.meituan.mtrace.TraceParam;
 import com.meituan.mtrace.Tracer;
 import org.apache.commons.lang.StringUtils;
 
@@ -11,10 +11,14 @@ import org.apache.commons.lang.StringUtils;
  * @version 1.0
  * @created 17/5/2 下午6:19
  **/
-public class TraceUtils {
+public class TraceIdUtils {
 
     public static String id() {
-        return StringUtils.isBlank(Tracer.id()) ? String.valueOf(IdGen.get()) : Tracer.id();
+        if (StringUtils.isBlank(Tracer.id())) {
+            //id不存在,初始化Tracer,以生成新id
+            Tracer.serverRecv(new TraceParam("init"));
+        }
+        return Tracer.id();
     }
 
 }
