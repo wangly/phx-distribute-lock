@@ -6,7 +6,7 @@ import com.sankuai.ia.lock.annotation.BatchReenLock;
 import com.sankuai.ia.lock.annotation.ReenLock;
 import com.sankuai.ia.lock.param.ReentrantLockParam;
 import com.sankuai.ia.lock.param.ReentrantUnlockParam;
-import com.sankuai.ia.lock.service.SquirrelLock;
+import com.sankuai.ia.lock.service.ReenLockService;
 import com.sankuai.ia.lock.utils.TraceIdUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +38,7 @@ import java.util.Map;
 public class LockInterceptor {
 
     @Autowired
-    private SquirrelLock squirrelLock;
+    private ReenLockService reenLockService;
 
     @Pointcut("@annotation(com.sankuai.ia.lock.annotation.ReenLock)")
     public void methodAnnotatedReenLock() {
@@ -71,7 +71,7 @@ public class LockInterceptor {
         lockParam.setKey(key);
         lockParam.setExpireTime(reenLockAnnotaion.expireTime());
         lockParam.setTraceId(traceId);
-        int value = squirrelLock.reentrantLock(lockParam);
+        int value = reenLockService.reentrantLock(lockParam);
 
         try {
             return jp.proceed(jp.getArgs());
@@ -83,7 +83,7 @@ public class LockInterceptor {
             unlockParam.setExpireTime(reenLockAnnotaion.expireTime());
             unlockParam.setTraceId(traceId);
             unlockParam.setOldValue(value);
-            squirrelLock.reentrantUnlock(unlockParam);
+            reenLockService.reentrantUnlock(unlockParam);
         }
     }
 
@@ -110,7 +110,7 @@ public class LockInterceptor {
                 lockParam.setKey(key);
                 lockParam.setExpireTime(reenLockAnnotaion.expireTime());
                 lockParam.setTraceId(traceId);
-                int value = squirrelLock.reentrantLock(lockParam);
+                int value = reenLockService.reentrantLock(lockParam);
                 valueMap.put(key, value);
             });
         }
@@ -128,7 +128,7 @@ public class LockInterceptor {
                     unlockParam.setExpireTime(reenLockAnnotaion.expireTime());
                     unlockParam.setTraceId(traceId);
                     unlockParam.setOldValue(valueMap.get(key));
-                    squirrelLock.reentrantUnlock(unlockParam);
+                    reenLockService.reentrantUnlock(unlockParam);
                 });
             }
         }
